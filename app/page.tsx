@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface Todo {
   id: number;
@@ -64,14 +65,20 @@ export default function Home() {
         {todos.map((todo) => (
           <li
             key={todo.id}
-            className="flex items-center gap-2 py-2 border-b border-gray-100"
+            className={cn(
+              "flex items-center gap-2 py-2 border-b border-gray-100 border-l-4 pl-2",
+              todo.priority === "high" && "border-l-red-500",
+              todo.priority === "medium" && "border-l-amber-500",
+              todo.priority === "low" && "border-l-green-500",
+              !todo.priority && "border-l-transparent"
+            )}
           >
             <input
               type="checkbox"
               checked={todo.done}
               onChange={() => toggleTodo(todo.id)}
             />
-            <span className={`flex-1 ${todo.done ? "line-through text-gray-400" : ""}`}>
+            <span className={cn("flex-1", todo.done && "line-through text-gray-400")}>
               {todo.text}
             </span>
             {todo.priority && (
