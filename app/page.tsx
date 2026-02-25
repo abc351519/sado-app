@@ -6,6 +6,7 @@ interface Todo {
   id: number;
   text: string;
   done: boolean;
+  priority: string;
 }
 
 export default function Home() {
@@ -15,7 +16,7 @@ export default function Home() {
   function addTodo() {
     const text = input.trim();
     if (!text) return;
-    setTodos([...todos, { id: Date.now(), text, done: false }]);
+    setTodos([...todos, { id: Date.now(), text, done: false, priority: "" }]);
     setInput("");
   }
 
