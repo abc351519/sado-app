@@ -12,12 +12,14 @@ interface Todo {
 export default function Home() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [input, setInput] = useState("");
+  const [priority, setPriority] = useState("");
 
   function addTodo() {
     const text = input.trim();
     if (!text) return;
-    setTodos([...todos, { id: Date.now(), text, done: false, priority: "" }]);
+    setTodos([...todos, { id: Date.now(), text, done: false, priority }]);
     setInput("");
+    setPriority("");
   }
 
   function toggleTodo(id: number) {
@@ -41,6 +43,16 @@ export default function Home() {
           placeholder="What needs to be done?"
           className="flex-1 px-3 py-2 text-base border border-gray-300"
         />
+        <select
+          value={priority}
+          onChange={(e) => setPriority(e.target.value)}
+          className="px-3 py-2 text-base border border-gray-300"
+        >
+          <option value="">Priority</option>
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+        </select>
         <button onClick={addTodo} className="px-4 py-2 text-base border border-gray-300">
           Add
         </button>
@@ -62,6 +74,9 @@ export default function Home() {
             <span className={`flex-1 ${todo.done ? "line-through text-gray-400" : ""}`}>
               {todo.text}
             </span>
+            {todo.priority && (
+              <span className="text-xs text-gray-500">({todo.priority})</span>
+            )}
             <button onClick={() => deleteTodo(todo.id)} className="text-xs px-2 py-1 border border-gray-300">
               Delete
             </button>
