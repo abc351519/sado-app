@@ -1,36 +1,148 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
+# Repository Exercise Specification
 
-First, run the development server:
+## 1. Repository Setup
+
+Students must:
+
+1. Fork the provided example repository.
+2. Clone their fork locally.
+3. Add the original repository as `upstream`.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <your-fork-url>
+cd <repository-name>
+git remote add upstream <original-repo-url>
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 2. Repository Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The repository contains:
 
-## Learn More
+* `main` branch → stable reference branch (do not modify directly unless instructed)
+* `dev` branch → integration branch for development
+* Source files for modification and feature implementation
 
-To learn more about Next.js, take a look at the following resources:
+All development work must occur in feature branches created from `dev`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 3. In-Class Tasks (Basic Operations)
 
-## Deploy on Vercel
+Students will practice the following Git operations on their fork:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 3.1 Modify and Commit
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+* Edit an existing file or add a new file.
+* Stage changes.
+* Commit with a meaningful message.
+* Push to GitHub.
+
+```bash
+git status
+git add .
+git commit -m "Describe your change clearly"
+git push origin <branch-name>
+```
+
+---
+
+### 3.2 Pull Updates
+
+If updates are made to `dev`:
+
+```bash
+git checkout dev
+git pull origin dev
+```
+
+Students must ensure their local branch stays up to date.
+
+---
+
+### 3.3 Branching and Merging Practice
+
+1. Create a feature branch from `dev`.
+2. Make changes.
+3. Commit changes.
+4. Merge back into `dev`.
+
+```bash
+git checkout dev
+git checkout -b feature/<name>
+
+# make changes
+git add .
+git commit -m "Implement feature"
+
+git checkout dev
+git merge feature/<name>
+```
+
+---
+
+## 4. Homework: Feature Branch Workflow
+
+### 4.1 Requirements
+
+Students must:
+
+1. Create a new branch following naming convention:
+
+   ```
+   feature/<short-feature-name>
+   ```
+
+2. Implement a small feature or enhancement.
+
+3. Make **at least three meaningful commits**, for example:
+
+   * Initial implementation
+   * Improvement or refactor
+   * Documentation or cleanup
+
+4. Merge the completed feature branch into `dev`.
+
+5. Push all branches to GitHub.
+
+---
+
+### 4.2 Commit Message Guidelines
+
+Commit messages must:
+
+* Be concise and descriptive
+* Explain what changed, not just that something changed
+
+Good example:
+
+```
+Add input validation to user form
+```
+
+Bad example:
+
+```
+update
+```
+
+---
+
+## 5. Constraints
+
+* Do not commit directly to `main`
+* Do not delete existing core files
+* Do not squash commits (commit history should remain visible)
+* Do not force push
+
+---
+
+## 6. Deliverable
+
+A GitHub repository containing:
+
+* Proper branch structure
+* Clear commit history
+* A merged feature branch into `dev`
