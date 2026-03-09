@@ -199,6 +199,14 @@ export default function Home() {
     return label;
   }
 
+  function deleteLabel(labelId: number) {
+    setLabels((prev) => prev.filter((l) => l.id !== labelId));
+    setTodos((prev) =>
+      prev.map((t) => ({ ...t, labelIds: t.labelIds.filter((id) => id !== labelId) }))
+    );
+    setFilterLabelIds((prev) => prev.filter((id) => id !== labelId));
+  }
+
   return (
     <main className="max-w-md mx-auto mt-16 px-4 font-sans">
       <h1 className="text-2xl font-bold mb-6">SADo App</h1>
@@ -236,10 +244,9 @@ export default function Home() {
             {labels.map((label) => {
               const active = filterLabelIds.includes(label.id);
               return (
-                <button
+                <span
                   key={label.id}
-                  type="button"
-                  onClick={() => toggleFilterLabel(label.id)}
+                  role="group"
                   className={cn(
                     "text-xs px-2 py-1 rounded border cursor-pointer inline-flex items-center gap-1",
                     !active && "border-transparent"
@@ -259,12 +266,29 @@ export default function Home() {
                         }
                   }
                 >
-                  <span
-                    className="w-1.5 h-1.5 rounded-full shrink-0"
-                    style={{ backgroundColor: label.color }}
-                  />
-                  {label.name}
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => toggleFilterLabel(label.id)}
+                    className="flex items-center gap-1"
+                  >
+                    <span
+                      className="w-1.5 h-1.5 rounded-full shrink-0"
+                      style={{ backgroundColor: label.color }}
+                    />
+                    {label.name}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteLabel(label.id);
+                    }}
+                    className="ml-0.5 hover:opacity-70 shrink-0 cursor-pointer"
+                    aria-label={`Delete ${label.name}`}
+                  >
+                    ×
+                  </button>
+                </span>
               );
             })}
           </div>
