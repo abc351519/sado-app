@@ -156,6 +156,18 @@ export default function Home() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [labels, setLabels] = useState<Label[]>([]);
   const [input, setInput] = useState("");
+  const [filterLabelIds, setFilterLabelIds] = useState<number[]>([]);
+
+  const filteredTodos =
+    filterLabelIds.length === 0
+      ? todos
+      : todos.filter((t) => filterLabelIds.some((id) => t.labelIds.includes(id)));
+
+  function toggleFilterLabel(labelId: number) {
+    setFilterLabelIds((prev) =>
+      prev.includes(labelId) ? prev.filter((id) => id !== labelId) : [...prev, labelId]
+    );
+  }
 
   function addTodo() {
     const text = input.trim();
@@ -213,10 +225,67 @@ export default function Home() {
         </button>
       </div>
 
+      {labels.length > 0 && (
+        <div className="mb-4">
+          <p className="text-sm text-gray-600 mb-2">Filter by label</p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setFilterLabelIds([])}
+              className={cn(
+                "text-xs px-2 py-1 rounded border cursor-pointer",
+                filterLabelIds.length === 0
+                  ? "bg-gray-800 text-white border-gray-800"
+                  : "bg-white text-black border-gray-300 hover:bg-gray-50"
+              )}
+            >
+              All
+            </button>
+            {labels.map((label) => {
+              const active = filterLabelIds.includes(label.id);
+              return (
+                <button
+                  key={label.id}
+                  type="button"
+                  onClick={() => toggleFilterLabel(label.id)}
+                  className={cn(
+                    "text-xs px-2 py-1 rounded border cursor-pointer inline-flex items-center gap-1",
+                    !active && "border-transparent"
+                  )}
+                  style={
+                    active
+                      ? {
+                          backgroundColor: `${label.color}30`,
+                          color: label.color,
+                          borderColor: label.color,
+                          boxShadow: `0 0 0 2px ${label.color}40`,
+                        }
+                      : {
+                          backgroundColor: `${label.color}20`,
+                          color: label.color,
+                          borderColor: "transparent",
+                        }
+                  }
+                >
+                  <span
+                    className="w-1.5 h-1.5 rounded-full shrink-0"
+                    style={{ backgroundColor: label.color }}
+                  />
+                  {label.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {todos.length === 0 && <p className="text-gray-400">No todos yet.</p>}
+      {todos.length > 0 && filteredTodos.length === 0 && (
+        <p className="text-gray-400">No todos match the selected labels.</p>
+      )}
 
       <ul className="list-none p-0 m-0">
-        {todos.map((todo) => (
+        {filteredTodos.map((todo) => (
           <li
             key={todo.id}
             className="py-3 border-b border-gray-100"
