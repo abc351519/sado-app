@@ -248,7 +248,8 @@ export default function Home() {
   function createLabel(name: string): Label {
     const existing = labels.find((l) => l.name.toLowerCase() === name.toLowerCase());
     if (existing) return existing;
-    const label: Label = { id: Date.now(), name, color: generateRandomColor() };
+    const existingColors = labels.map((l) => l.color);
+    const label: Label = { id: Date.now(), name, color: generateRandomColor(existingColors) };
     setLabels([...labels, label]);
     return label;
   }
