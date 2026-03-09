@@ -151,11 +151,65 @@ function LabelDropdown({
   );
 }
 
+type PendingDelete = { type: "label"; id: number; name?: string } | { type: "todo"; id: number; text?: string };
+
+function ConfirmModal({
+  pending,
+  onConfirm,
+  onCancel,
+}: {
+  pending: PendingDelete | null;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  if (!pending) return null;
+  const isLabel = pending.type === "label";
+  const message = isLabel
+    ? `Delete label "${pending.name ?? "this label"}"? This will remove it from all todos.`
+    : `Delete todo "${pending.text ?? "this item"}"?`;
+  return (
+    <div
+      className="fixed inset-0 z-20 flex items-center justify-center bg-black/40 dark:bg-black/60"
+      onClick={onCancel}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="confirm-title"
+    >
+      <div
+        className="bg-white dark:bg-gray-800 rounded shadow-lg p-4 max-w-sm w-full mx-4 border border-transparent dark:border-gray-700"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 id="confirm-title" className="font-semibold text-lg mb-2 text-gray-900 dark:text-white">
+          Confirm delete
+        </h2>
+        <p className="text-black dark:text-gray-200 mb-4">{message}</p>
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="px-3 py-1.5 bg-red-600 dark:bg-red-700 text-white rounded cursor-pointer hover:bg-red-700 dark:hover:bg-red-600"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [labels, setLabels] = useState<Label[]>([]);
   const [input, setInput] = useState("");
   const [filterLabelIds, setFilterLabelIds] = useState<number[]>([]);
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
 
   const filteredTodos =
     filterLabelIds.length === 0
@@ -207,8 +261,23 @@ export default function Home() {
     setFilterLabelIds((prev) => prev.filter((id) => id !== labelId));
   }
 
+  function confirmDelete() {
+    if (!pendingDelete) return;
+    if (pendingDelete.type === "label") {
+      deleteLabel(pendingDelete.id);
+    } else {
+      deleteTodo(pendingDelete.id);
+    }
+    setPendingDelete(null);
+  }
+
   return (
     <main className="max-w-md mx-auto mt-16 px-4 font-sans">
+      <ConfirmModal
+        pending={pendingDelete}
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
       <h1 className="text-2xl font-bold mb-6">SADo App</h1>
 
       <div className="flex gap-2 mb-6">
@@ -281,7 +350,7 @@ export default function Home() {
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      deleteLabel(label.id);
+                      setPendingDelete({ type: "label", id: label.id, name: label.name });
                     }}
                     className="ml-0.5 hover:opacity-70 shrink-0 cursor-pointer"
                     aria-label={`Delete ${label.name}`}
@@ -323,7 +392,10 @@ export default function Home() {
                 onRemoveLabel={(id) => removeLabelFromTodo(todo.id, id)}
                 onCreateLabel={createLabel}
               />
-              <button onClick={() => deleteTodo(todo.id)} className="text-xs px-2 py-1 border border-gray-300 shrink-0 cursor-pointer">
+              <button
+                onClick={() => setPendingDelete({ type: "todo", id: todo.id, text: todo.text })}
+                className="text-xs px-2 py-1 border border-gray-300 shrink-0 cursor-pointer"
+              >
                 Delete
               </button>
             </div>
