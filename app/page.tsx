@@ -1,21 +1,165 @@
 "use client";
 
-import { useState } from "react";
+import { cn, generateRandomColor } from "@/lib/utils";
+import { useEffect, useRef, useState } from "react";
+
+interface Label {
+  id: number;
+  name: string;
+  color: string;
+}
 
 interface Todo {
   id: number;
   text: string;
   done: boolean;
+  labelIds: number[];
+}
+
+interface LabelDropdownProps {
+  labels: Label[];
+  selectedIds: number[];
+  onAddLabel: (label: Label) => void;
+  onRemoveLabel: (id: number) => void;
+  onCreateLabel: (name: string) => Label;
+}
+
+function LabelDropdown({
+  labels,
+  selectedIds,
+  onAddLabel,
+  onRemoveLabel,
+  onCreateLabel,
+}: LabelDropdownProps) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (open) {
+      setTimeout(() => inputRef.current?.focus(), 0);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const searchLower = search.trim().toLowerCase();
+  const filteredLabels = searchLower
+    ? labels.filter((l) => l.name.toLowerCase().includes(searchLower))
+    : labels;
+  const canCreate = search.trim().length > 0 && !labels.some((l) => l.name.toLowerCase() === searchLower);
+  const selectedLabels = labels.filter((l) => selectedIds.includes(l.id));
+
+  return (
+    <div ref={containerRef} className="relative flex items-center gap-2 shrink-0">
+      {selectedLabels.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {selectedLabels.map((label) => (
+            <span
+              key={label.id}
+              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs rounded"
+              style={{
+                backgroundColor: `${label.color}30`,
+                color: label.color,
+                borderLeft: `3px solid ${label.color}`,
+              }}
+            >
+              {label.name}
+              <button
+                type="button"
+                onClick={() => onRemoveLabel(label.id)}
+                className="ml-0.5 hover:opacity-70"
+                aria-label={`Remove ${label.name}`}
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+      <button
+        type="button"
+        onClick={() => {
+          const next = !open;
+          if (next) setSearch("");
+          setOpen(next);
+        }}
+        className="text-xs px-2 py-1 border border-gray-300 cursor-pointer shrink-0"
+      >
+        + Label
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full mt-1 z-10 w-52 bg-white border border-gray-200 shadow-lg rounded py-1 text-black">
+          <input
+            ref={inputRef}
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search or create..."
+            className="w-full px-2 py-1.5 text-sm text-black border-b border-gray-100 outline-none placeholder:text-gray-500"
+          />
+          <div className="max-h-40 overflow-y-auto text-black">
+            {canCreate && (
+              <button
+                type="button"
+                onClick={() => {
+                  const label = onCreateLabel(search.trim());
+                  onAddLabel(label);
+                  setSearch("");
+                }}
+                className="w-full text-left px-2 py-1.5 text-sm text-black hover:bg-gray-100 flex items-center gap-2"
+              >
+                <span className="text-black">Create new:</span>
+                <span className="font-medium">&quot;{search.trim()}&quot;</span>
+              </button>
+            )}
+            {filteredLabels.map((label) => {
+              const isSelected = selectedIds.includes(label.id);
+              return (
+                <button
+                  key={label.id}
+                  type="button"
+                  onClick={() => (isSelected ? onRemoveLabel(label.id) : onAddLabel(label))}
+                  className="w-full text-left px-2 py-1.5 text-sm text-black hover:bg-gray-100 flex items-center gap-2"
+                >
+                  <span
+                    className="w-2.5 h-2.5 rounded-full shrink-0"
+                    style={{ backgroundColor: label.color }}
+                  />
+                  <span className="flex-1 truncate">{label.name}</span>
+                  {isSelected && <span className="text-xs text-black">✓</span>}
+                </button>
+              );
+            })}
+            {filteredLabels.length === 0 && !canCreate && (
+              <p className="px-2 py-2 text-sm text-black">No labels</p>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function Home() {
   const [todos, setTodos] = useState<Todo[]>([]);
+  const [labels, setLabels] = useState<Label[]>([]);
   const [input, setInput] = useState("");
 
   function addTodo() {
     const text = input.trim();
     if (!text) return;
-    setTodos([...todos, { id: Date.now(), text, done: false }]);
+    setTodos([...todos, { id: Date.now(), text, done: false, labelIds: [] }]);
     setInput("");
   }
 
@@ -25,6 +169,22 @@ export default function Home() {
 
   function deleteTodo(id: number) {
     setTodos(todos.filter((t) => t.id !== id));
+  }
+
+  function addLabelToTodo(todoId: number, label: Label) {
+    setTodos(todos.map((t) => (t.id === todoId ? { ...t, labelIds: [...t.labelIds, label.id] } : t)));
+  }
+
+  function removeLabelFromTodo(todoId: number, labelId: number) {
+    setTodos(todos.map((t) => (t.id === todoId ? { ...t, labelIds: t.labelIds.filter((id) => id !== labelId) } : t)));
+  }
+
+  function createLabel(name: string): Label {
+    const existing = labels.find((l) => l.name.toLowerCase() === name.toLowerCase());
+    if (existing) return existing;
+    const label: Label = { id: Date.now(), name, color: generateRandomColor() };
+    setLabels([...labels, label]);
+    return label;
   }
 
   return (
@@ -51,19 +211,29 @@ export default function Home() {
         {todos.map((todo) => (
           <li
             key={todo.id}
-            className="flex items-center gap-2 py-2 border-b border-gray-100"
+            className="py-3 border-b border-gray-100"
           >
-            <input
-              type="checkbox"
-              checked={todo.done}
-              onChange={() => toggleTodo(todo.id)}
-            />
-            <span className={`flex-1 ${todo.done ? "line-through text-gray-400" : ""}`}>
-              {todo.text}
-            </span>
-            <button onClick={() => deleteTodo(todo.id)} className="text-xs px-2 py-1 border border-gray-300">
-              Delete
-            </button>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={todo.done}
+                onChange={() => toggleTodo(todo.id)}
+                className="shrink-0"
+              />
+              <span className={cn("flex-1 min-w-0", todo.done && "line-through text-gray-400")}>
+                {todo.text}
+              </span>
+              <LabelDropdown
+                labels={labels}
+                selectedIds={todo.labelIds}
+                onAddLabel={(label) => addLabelToTodo(todo.id, label)}
+                onRemoveLabel={(id) => removeLabelFromTodo(todo.id, id)}
+                onCreateLabel={createLabel}
+              />
+              <button onClick={() => deleteTodo(todo.id)} className="text-xs px-2 py-1 border border-gray-300 shrink-0 cursor-pointer">
+                Delete
+              </button>
+            </div>
           </li>
         ))}
       </ul>
