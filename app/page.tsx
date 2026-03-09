@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn, generateRandomColor } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
 
@@ -104,9 +109,16 @@ function LabelDropdown({
             </span>
           ))}
           {useCompact && (
-            <span className="text-xs text-gray-500">
-              +{selectedLabels.length - displayCount} more
-            </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="text-xs text-gray-500 cursor-default">
+                  +{selectedLabels.length - displayCount} more
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{selectedLabels.map((l) => l.name).join(", ")}</p>
+              </TooltipContent>
+            </Tooltip>
           )}
         </div>
       )}
