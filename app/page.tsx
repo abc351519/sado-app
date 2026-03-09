@@ -16,12 +16,16 @@ interface Todo {
   labelIds: number[];
 }
 
+const MAX_LABEL_LENGTH = 10;
+const MAX_LABELS_PER_TODO = 3;
+
 interface LabelDropdownProps {
   labels: Label[];
   selectedIds: number[];
   onAddLabel: (label: Label) => void;
   onRemoveLabel: (id: number) => void;
-  onCreateLabel: (name: string) => Label;
+  onCreateLabel: (name: string) => Label | null;
+  maxLabelCount?: number;
 }
 
 function LabelDropdown({
@@ -30,7 +34,9 @@ function LabelDropdown({
   onAddLabel,
   onRemoveLabel,
   onCreateLabel,
+  maxLabelCount = MAX_LABELS_PER_TODO,
 }: LabelDropdownProps) {
+  const canAddMore = selectedIds.length < maxLabelCount;
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -56,7 +62,10 @@ function LabelDropdown({
   const filteredLabels = searchLower
     ? labels.filter((l) => l.name.toLowerCase().includes(searchLower))
     : labels;
-  const canCreate = search.trim().length > 0 && !labels.some((l) => l.name.toLowerCase() === searchLower);
+  const canCreate =
+    canAddMore &&
+    search.trim().length > 0 &&
+    !labels.some((l) => l.name.toLowerCase() === searchLower);
   const selectedLabels = labels.filter((l) => selectedIds.includes(l.id));
 
   return (
@@ -109,18 +118,23 @@ function LabelDropdown({
             className="w-full px-2 py-1.5 text-sm text-black border-b border-gray-100 outline-none placeholder:text-gray-500"
           />
           <div className="max-h-40 overflow-y-auto text-black">
+            {selectedIds.length >= maxLabelCount && (
+              <p className="px-2 py-1.5 text-sm text-gray-500">Max {maxLabelCount} labels</p>
+            )}
             {canCreate && (
               <button
                 type="button"
                 onClick={() => {
                   const label = onCreateLabel(search.trim());
-                  onAddLabel(label);
-                  setSearch("");
+                  if (label) {
+                    onAddLabel(label);
+                    setSearch("");
+                  }
                 }}
                 className="w-full text-left px-2 py-1.5 text-sm text-black hover:bg-gray-100 flex items-center gap-2"
               >
                 <span className="text-black">Create new:</span>
-                <span className="font-medium">&quot;{search.trim()}&quot;</span>
+                <span className="font-medium">&quot;{search.trim().slice(0, MAX_LABEL_LENGTH)}&quot;</span>
               </button>
             )}
             {filteredLabels.map((label) => {
@@ -129,8 +143,13 @@ function LabelDropdown({
                 <button
                   key={label.id}
                   type="button"
-                  onClick={() => (isSelected ? onRemoveLabel(label.id) : onAddLabel(label))}
-                  className="w-full text-left px-2 py-1.5 text-sm text-black hover:bg-gray-100 flex items-center gap-2"
+                  onClick={() =>
+                    isSelected ? onRemoveLabel(label.id) : canAddMore && onAddLabel(label)
+                  }
+                  className={cn(
+                    "w-full text-left px-2 py-1.5 text-sm text-black flex items-center gap-2",
+                    canAddMore || isSelected ? "hover:bg-gray-100" : "opacity-60 cursor-default"
+                  )}
                 >
                   <span
                     className="w-2.5 h-2.5 rounded-full shrink-0"
@@ -238,18 +257,20 @@ export default function Home() {
   }
 
   function addLabelToTodo(todoId: number, label: Label) {
-    setTodos(todos.map((t) => (t.id === todoId ? { ...t, labelIds: [...t.labelIds, label.id] } : t)));
+    setTodos(todos.map((t) => (t.id === todoId && t.labelIds.length < MAX_LABELS_PER_TODO ? { ...t, labelIds: [...t.labelIds, label.id] } : t)));
   }
 
   function removeLabelFromTodo(todoId: number, labelId: number) {
     setTodos(todos.map((t) => (t.id === todoId ? { ...t, labelIds: t.labelIds.filter((id) => id !== labelId) } : t)));
   }
 
-  function createLabel(name: string): Label {
-    const existing = labels.find((l) => l.name.toLowerCase() === name.toLowerCase());
+  function createLabel(name: string): Label | null {
+    const trimmed = name.trim().slice(0, MAX_LABEL_LENGTH);
+    if (!trimmed) return null;
+    const existing = labels.find((l) => l.name.toLowerCase() === trimmed.toLowerCase());
     if (existing) return existing;
     const existingColors = labels.map((l) => l.color);
-    const label: Label = { id: Date.now(), name, color: generateRandomColor(existingColors) };
+    const label: Label = { id: Date.now(), name: trimmed, color: generateRandomColor(existingColors) };
     setLabels([...labels, label]);
     return label;
   }
@@ -265,7 +286,9 @@ export default function Home() {
   function confirmDelete() {
     if (!pendingDelete) return;
     if (pendingDelete.type === "label") {
-      deleteLabel(pendingDelete.id);
+      // BUG (educational): we should delete pendingDelete.id, but we pass the first label's id so the wrong label gets removed. Fix by using pendingDelete.id.
+      const firstLabelId = labels[0]?.id ?? pendingDelete.id;
+      deleteLabel(firstLabelId);
     } else {
       deleteTodo(pendingDelete.id);
     }
