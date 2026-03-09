@@ -67,12 +67,14 @@ function LabelDropdown({
     search.trim().length > 0 &&
     !labels.some((l) => l.name.toLowerCase() === searchLower);
   const selectedLabels = labels.filter((l) => selectedIds.includes(l.id));
+  const totalLabelChars = selectedLabels.reduce((sum, l) => sum + l.name.length, 0);
+  const useCompact = selectedLabels.length >= 3 && totalLabelChars >= 30;
 
   return (
     <div ref={containerRef} className="relative flex items-center gap-2 shrink-0">
       {selectedLabels.length > 0 && (
         <div className="flex flex-wrap items-center gap-1">
-          {(selectedLabels.length >= 3 ? selectedLabels.slice(0, 2) : selectedLabels).map((label) => (
+          {(useCompact ? selectedLabels.slice(0, 2) : selectedLabels).map((label) => (
             <span
               key={label.id}
               className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs rounded"
@@ -93,7 +95,7 @@ function LabelDropdown({
               </button>
             </span>
           ))}
-          {selectedLabels.length >= 3 && (
+          {useCompact && (
             <span className="text-xs text-gray-500">
               +{selectedLabels.length - 2}
             </span>
