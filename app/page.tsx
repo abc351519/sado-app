@@ -112,7 +112,7 @@ function LabelDropdown({
         }}
         className="text-xs px-2 py-1 border border-gray-300 cursor-pointer shrink-0"
       >
-        + Label
+        +
       </button>
 
       {open && (
