@@ -17,7 +17,7 @@ interface Todo {
 }
 
 const MAX_LABEL_LENGTH = 10;
-const MAX_LABELS_PER_TODO = 3;
+const MAX_LABELS_PER_TODO = 5;
 
 interface LabelDropdownProps {
   labels: Label[];
