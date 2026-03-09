@@ -139,7 +139,7 @@ update
 
 ---
 
-## 6. Deliverable
+## 6. Deliverables
 
 A GitHub repository containing:
 
