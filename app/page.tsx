@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 
 interface Todo {
   id: number;
@@ -14,17 +15,24 @@ export default function Home() {
 
   function addTodo() {
     const text = input.trim();
-    if (!text) return;
+    if (!text) {
+      toast.error("請輸入待辦事項");
+      return;
+    }
     setTodos([...todos, { id: Date.now(), text, done: false }]);
     setInput("");
+    toast.success("已新增待辦");
   }
 
   function toggleTodo(id: number) {
+    const todo = todos.find((t) => t.id === id);
     setTodos(todos.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
+    toast.success(todo?.done ? "已標記為未完成" : "已標記為完成");
   }
 
   function deleteTodo(id: number) {
     setTodos(todos.filter((t) => t.id !== id));
+    toast.info("已刪除待辦");
   }
 
   return (
